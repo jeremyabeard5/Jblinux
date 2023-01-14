@@ -1,0 +1,203 @@
+#!/usr/bin/env bash
+
+#echo "Hello World!"
+
+#echo "Arguments: $#"
+
+display_help() {
+	echo "iperf helper :)"
+	echo "Usage: $0 [option...]" >&2
+	echo
+	echo "   -h, --help                 Display help function (this)"
+	echo
+	echo "   Server/Client Options"
+	echo "   -s, s, --server, server    Specify be iperf SERVER"
+	echo "   -cl, cl, --client, client  Specify be iperf CLIENT"
+	echo
+	echo "   TCP/UDP Options"
+	echo "   -t, t, --tcp, tcp          Specify TCP"
+	echo "   -u, u, --udp, udp          Specify UDP"
+	echo
+	echo "   Output Options"
+	echo "   -c, c, --csv, csv          Specify CSV output"
+	echo
+	# echo some stuff here for the -a or --add-options 
+	exit 1
+}
+
+if [[ $# -gt 0 ]]; then
+	case "$1" in
+		"-h" | "--help")
+			display_help
+		;;
+	esac
+
+	echo 'Received arguments'
+
+	declare -i count=1
+	declare -i port=-1
+	hostip=unset
+	
+	# ARGUMENT CHECK BOOLS
+	set_tcpudp=false
+	set_csv=false
+	set_clientserver=false
+
+	# CONSTANTS
+	tcpudp_var=unset
+	clientserver_var=unset
+
+	#for var in "$@"
+	while :
+	do
+		#echo ""
+		#echo "argument $count : $var"
+		var=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
+		case "$var" in
+			"-h" | "--help")
+				display_help
+				exit 0
+			;;
+
+			"-s" | "s" | "--server" | "server")
+				if [ "$set_clientserver" = false ]; then
+					echo 'Received server argument'
+					set_clientserver=true
+					clientserver_var=server
+				else
+					echo 'Received duplicate server/client arguments, disregarding additional conflicting arguments'
+				fi
+				shift
+			;;
+
+			"-cl" | "cl" | "--client" | "client")
+				if [ "$set_clientserver" = false ]; then
+					echo 'Received client argument'
+					set_clientserver=true
+					clientserver_var=client
+				else
+					echo 'Received duplicate server/client arguments, disregarding additional conflicting arguments'
+				fi
+				shift
+				host=$1
+				echo "host is $host"
+				hostip=$host
+				shift
+			;;
+
+			"-t" | "t" | "--tcp" | "tcp")
+				if [ "$set_tcpudp" = false ]; then
+					echo 'Received tcp argument'
+					set_tcpudp=true
+					tcpudp_var=tcp
+				else
+					echo 'Received duplicate tcp/udp arguments, disregarding additional conflicting arguments'
+				fi
+				shift
+			;;
+
+			"-u" | "u" | "--udp" | "udp")
+				if [ "$set_tcpudp" = false ]; then
+					echo 'Received udp argument'
+					set_tcpudp=true
+					tcpudp_var=udp
+				else
+					echo 'Received duplicate tcp/udp arguments, disregarding additional conflicting arguments'
+				fi
+				shift
+			;;
+
+			"-c" | "c" | "--csv" | "csv")
+				if [ "$set_csv" = false ]; then
+					echo 'Received csv argument'
+					set_csv=true
+				else
+					echo 'Received duplicate csv arguments, csv already set'
+				fi
+				shift
+			;;
+			
+			"-p" | "--port")
+				shift
+				port=$1
+				echo "port is $port"
+				shift
+			;;
+			
+			--) # End of all options
+				shift
+				break
+			;;
+			
+			-*)
+				echo "Error: Unknown option: $1" >&2
+				## or call function display_help
+				exit 1
+			;;
+			
+			*)  # No more options
+				break
+			;;
+		esac
+		count=$((count + 1))
+	done
+
+	echo 'Done processing arguments'
+	if [[ "$set_clientserver" = true ]] && [[ "$set_tcpudp" = true ]]; then
+		echo 'All parameters are set'
+		if [[ "$clientserver_var" = client ]]; then
+			if [[ "$tcpudp_var" = tcp ]]; then
+				if [[ "$set_csv" = true ]]; then
+					echo 'Starting CLIENT TCP CSV'
+					iperf -c $hostip -p $port -M 1460 -t 9999 -i 1 -y C
+				else
+					echo 'Starting CLIENT TCP NO-CSV'
+					iperf -c $hostip -p $port -M 1460 -t 9999 -i 1
+				fi
+			elif [[ "$tcpudp_var" = udp ]]; then
+				if [[ "$set_csv" = true ]]; then
+					echo 'Starting CLIENT UDP CSV'
+					iperf -c $hostip -p $port -u -t 9999 -i 1 -y C
+				else
+					echo 'Starting CLIENT UDP NO-CSV'
+					iperf -c $hostip -p $port -u -t 9999 -i 1
+				fi
+			else
+				echo 'ERROR 1'
+				exit 1;
+			fi
+		elif [[ "$clientserver_var" = server ]]; then
+			if [[ "$tcpudp_var" = tcp ]]; then
+				if [[ "$set_csv" = true ]]; then
+					echo 'Starting SERVER TCP CSV'
+					iperf -s -p $port -M 1460 -t 9999 -i 1 -y C
+				else
+					echo 'Starting SERVER TCP NO-CSV'
+					iperf -s -p $port -M 1460 -t 9999 -i 1
+				fi
+			elif [[ "$tcpudp_var" = udp ]]; then
+				if [[ "$set_csv" = true ]]; then
+					echo 'Starting SERVER UDP CSV'
+					iperf -s -p $port -u -t 9999 -i 1-y C
+				else
+					echo 'Starting SERVER UDP NO-CSV'
+					iperf -s -p $port -u -t 9999 -i 1
+				fi
+			else
+				echo 'ERROR 1'
+				exit 1
+			fi
+		else
+			echo 'ERROR 2'
+			exit 2	
+		fi	
+	else
+		echo 'All parameters not set yet'
+	fi
+else
+	display_help
+fi
+
+echo "Finished"
+echo ""
