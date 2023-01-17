@@ -138,7 +138,6 @@ if [[ $# -gt 0 ]]; then
 					port=$1
 					echo "port is $port"
 					set_port=true
-					shift
 				else
 					echo 'Received duplicate port arguments, port already set'
 				fi
