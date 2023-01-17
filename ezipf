@@ -5,7 +5,9 @@
 #echo "Arguments: $#"
 
 display_help() {
+	echo
 	echo "ezipf"
+	echo
 	echo "iperf helper :)"
 	echo "Usage: $0 [option...]" >&2
 	echo
@@ -197,7 +199,7 @@ if [[ $# -gt 0 ]]; then
 			elif [[ "$tcpudp_var" = udp ]]; then
 				if [[ "$set_csv" = true ]]; then
 					echo 'Starting SERVER UDP CSV'
-					iperf -s -p $port -u -t 9999 -i 1-y C
+					iperf -s -p $port -u -t 9999 -i 1 -y C
 				else
 					echo 'Starting SERVER UDP NO-CSV'
 					iperf -s -p $port -u -t 9999 -i 1
