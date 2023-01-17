@@ -9,21 +9,21 @@ display_help() {
 	echo "iperf helper :)"
 	echo "Usage: $0 [option...]" >&2
 	echo
-	echo "   -h, --help                 Display help function (this)"
+	echo "   -h, --help                              Display help function (this)"
 	echo
 	echo "   Server/Client Options"
-	echo "   -s, s, --server, server    Specify be iperf SERVER"
-	echo "   -cl, cl, --client, client  Specify be iperf CLIENT (followed by host IP)"
+	echo "   -s, s, --server, server                 Specify be iperf SERVER"
+	echo "   -cl, cl, --client, client  <host IP>    Specify be iperf CLIENT (followed by host IP)"
 	echo
 	echo "   Port Options"
-	echo "   -p, --port, port           Specify the port to TX/RX (followed by #### port)"
+	echo "   -p, --port, port           <int>        Specify the port to TX/RX (followed by #### port)"
 	echo
 	echo "   TCP/UDP Options"
-	echo "   -t, t, --tcp, tcp          Specify TCP"
-	echo "   -u, u, --udp, udp          Specify UDP"
+	echo "   -t, t, --tcp, tcp                       Specify TCP"
+	echo "   -u, u, --udp, udp                       Specify UDP"
 	echo
 	echo "   Output Options"
-	echo "   -c, c, --csv, csv          Specify CSV output"
+	echo "   -c, c, --csv, csv                       Specify CSV output"
 	echo
 	echo "Example Usage:"
 	echo "ezipf server port 3210 tcp csv"
@@ -53,6 +53,7 @@ if [[ $# -gt 0 ]]; then
 	set_tcpudp=false
 	set_csv=false
 	set_clientserver=false
+	set_port=false
 
 	# CONSTANTS
 	tcpudp_var=unset
@@ -130,9 +131,15 @@ if [[ $# -gt 0 ]]; then
 			;;
 			
 			"-p" | "--port" | "port")
-				shift
-				port=$1
-				echo "port is $port"
+				if [ "$set_port" = false ]; then
+					shift
+					port=$1
+					echo "port is $port"
+					set_port=true
+					shift
+				else
+					echo 'Received duplicate port arguments, port already set'
+				fi
 				shift
 			;;
 			
@@ -155,7 +162,7 @@ if [[ $# -gt 0 ]]; then
 	done
 
 	echo 'Done processing arguments'
-	if [[ "$set_clientserver" = true ]] && [[ "$set_tcpudp" = true ]]; then
+	if [[ "$set_clientserver" = true ]] && [[ "$set_tcpudp" = true ]] && [[ "$set_port" = true ]]; then
 		echo 'All parameters are set'
 		if [[ "$clientserver_var" = client ]]; then
 			if [[ "$tcpudp_var" = tcp ]]; then
@@ -204,7 +211,7 @@ if [[ $# -gt 0 ]]; then
 			exit 2	
 		fi	
 	else
-		echo 'All parameters not set yet'
+		echo 'All parameters not set yet (server/client, tcp/udp, port)'
 	fi
 else
 	display_help
