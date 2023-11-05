@@ -1,0 +1,7 @@
+htop
+docker
+nano
+vim
+epel-release
+python3
+git
